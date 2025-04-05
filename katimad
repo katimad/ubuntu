@@ -22,18 +22,27 @@ do
     echo "8) 도커 설치 (공식 레포지토리 사용)"
     echo "9) 도커 컨테이너 목록 표시"
     echo "10) 도커 이미지 목록 표시"
-    echo "11) 특정 도커 또는 도커 이미지 삭제"
-    echo "12) 스크린(screen) 설치"
-    echo "13) 특정 스크린(screen) 생성"
-    echo "14) 스크린 목록 표시"
-    echo "15) 특정 스크린 들어가기 (빠져나올 땐 반드시 Ctrl+A, D 입니다.)"
-    echo "16) 특정 스크린 삭제"
-    echo "17) 스왑 메모리 20GB 추가하기"
-    echo "18) nmon 설치(서버실시간 리소스 확인가능)"
-    echo "19) nmon 실행"
-    echo "20) 시스템 청소 및 불필요한 패키지 제거"
-    echo "21) 시스템 유지보수 정리 작업 (APT 캐시, 백업 데이터, 오래된 로그, 스왑 청소, 커널 제거, 중지된 Docker 관련 삭제 및 정리 작업)"
-    echo "22) 전체 시스템 최적화 작업 (17번+18번 실행)"
+    echo "11) 특정 도커 들어가기"
+    echo "12) 특정 도커 또는 도커 이미지 삭제"
+    echo "13) 스크린(screen) 설치"
+    echo "14) 특정 스크린(screen) 생성"
+    echo "15) 스크린 목록 표시"
+    echo "16) 특정 스크린 들어가기 (빠져나올 땐 반드시 Ctrl+A, D 입니다.)"
+    echo "17) 특정 스크린 삭제"
+    echo "18) 스왑 메모리 20GB 추가하기"
+    echo "19) nmon 설치(서버실시간 리소스 확인가능)"
+    echo "20) nmon 실행"
+    echo "21) 방화벽 설치 (기본 포트: ssh, 80, 443, https, http, ftp, www, 22 오픈)"
+    echo "22) 방화벽 활성화 하기"
+    echo "23) 특정 방화벽(포트)를 오픈하기"
+    echo "24) 방화벽 비활성화 하기 (방화벽 자체 종료)"
+    echo "25) 현재 설정된 방화벽 목록 확인"
+    echo "26) 특정 파일 및 폴더를 서버 전체에서 검색"
+    echo "27) 서버의 Public IP 확인"
+    echo "28) 패키지 깨진 부분 수정 (sudo apt --fix-broken install)"
+    echo "29) 시스템 청소 및 불필요한 패키지 제거"
+    echo "30) 시스템 유지보수 정리 작업 (APT 캐시, 백업 데이터, 오래된 로그, 스왑 청소, 커널 제거, 중지된 Docker 관련 삭제 및 정리 작업)"
+    echo "31) 전체 시스템 최적화 작업 (시스템 청소 및 불필요한 패키지제거 + 시스템 유지 보수 정리 작업)"
     echo "0) 종료"
     echo "======================================"
     read -p "원하는 작업의 번호를 입력하세요: " choice
@@ -158,7 +167,12 @@ do
             echo ""
             ;;
         11)
-            print_random "---- 특정 도커(컨테이너) 또는 이미지 삭제 ----"
+            print_random "---- 특정 도커 들어가기 ----"
+            read -p "들어가고자 하는 도커 컨테이너의 이름 또는 ID를 입력하세요: " docker_target
+            sudo docker exec -it "$docker_target" bash || sudo docker exec -it "$docker_target" sh
+            ;;
+        12)
+            print_random "---- 특정 도커 또는 도커 이미지 삭제 ----"
             read -p "삭제할 도커 컨테이너/이미지 이름 또는 ID (하나만 입력): " docker_target
             print_random "'$docker_target'를(을) 도커 컨테이너 또는 이미지로 판단하여 삭제합니다."
             sudo docker rm -f "$docker_target" 2>/dev/null
@@ -175,24 +189,24 @@ do
             fi
             echo ""
             ;;
-        12)
+        13)
             print_random "---- 스크린(screen) 설치 ----"
             sudo apt update
             sudo apt install screen -y
             print_random "스크린 설치 완료!"
             ;;
-        13)
+        14)
             print_random "---- 특정 스크린(screen) 생성 ----"
             read -p "새롭게 생성할 스크린 이름을 입력하세요: " new_screen
             print_random "새로운 스크린 '$new_screen'을(를) 생성합니다..."
             screen -S "$new_screen"
             ;;
-        14)
+        15)
             print_random "---- 스크린 목록 표시 ----"
             screen -ls
             echo ""
             ;;
-        15)
+        16)
             print_random "---- 특정 스크린 들어가기 (빠져나올 땐 반드시 Ctrl+A, D 입니다.) ----"
             read -p "들어갈 스크린 세션의 이름 또는 PID를 입력하세요: " screen_target
             sessions=$(screen -ls | grep -o '[0-9]\+\.[^[:space:]]\+')
@@ -232,7 +246,7 @@ do
                 fi
             fi
             ;;
-        16)
+        17)
             print_random "---- 특정 스크린 삭제 ----"
             read -p "종료할 스크린 세션의 이름 또는 PID를 입력하세요: " screen_target
             sessions=$(screen -ls | grep -o '[0-9]\+\.[^[:space:]]\+')
@@ -274,9 +288,8 @@ do
                 fi
             fi
             ;;
-        17)
-            print_random "---- 20GB 스왑 메모리 추가 ----"
-            # 기존 /swapfile이 있으면 해제 후 삭제
+        18)
+            print_random "---- 스왑 메모리 20GB 추가 ----"
             if [ -f /swapfile ]; then
                 print_random "/swapfile이 이미 존재합니다. 스왑을 해제하고 기존 파일을 삭제합니다..."
                 sudo swapoff /swapfile
@@ -293,24 +306,75 @@ do
             sudo swapon --show
             print_random "스왑 메모리 20GB가 추가되었고, /etc/fstab에 등록되었습니다."
             ;;
-        18)
+        19)
             print_random "---- nmon 설치(서버실시간 리소스 확인가능) ----"
             sudo apt update
             sudo apt install nmon -y
             print_random "nmon 설치 완료!"
             ;;
-        19)
+        20)
             print_random "---- nmon 실행 ----"
             print_random "nmon이 실행됩니다. 종료하려면 nmon 내부에서 q 누르세요."
             nmon
             ;;
-        20)
+        21)
+            print_random "---- 방화벽 설치 (기본 포트: ssh, 80, 443, https, http, ftp, www, 22 오픈) ----"
+            sudo apt update
+            sudo apt install ufw -y
+            print_random "기본 포트 오픈 중..."
+            sudo ufw allow ssh
+            sudo ufw allow 80
+            sudo ufw allow 443
+            sudo ufw allow https
+            sudo ufw allow http
+            sudo ufw allow ftp
+            sudo ufw allow www
+            sudo ufw allow 22
+            print_random "방화벽 설치 및 기본 포트 오픈 완료!"
+            ;;
+        22)
+            print_random "---- 방화벽 활성화 하기 ----"
+            sudo ufw enable
+            print_random "방화벽이 활성화되었습니다."
+            ;;
+        23)
+            print_random "---- 특정 방화벽(포트)를 오픈하기 ----"
+            read -p "오픈할 포트 번호를 입력하세요: " port
+            sudo ufw allow "$port"
+            print_random "포트 $port가 오픈되었습니다."
+            ;;
+        24)
+            print_random "---- 방화벽 비활성화 하기 (방화벽 자체 종료) ----"
+            sudo ufw disable
+            print_random "방화벽이 비활성화되었습니다."
+            ;;
+        25)
+            print_random "---- 현재 설정된 방화벽 목록 확인 ----"
+            sudo ufw status
+            ;;
+        26)
+            print_random "---- 특정 파일 및 폴더를 서버 전체에서 검색 ----"
+            read -p "검색할 파일 또는 폴더의 이름(또는 패턴)을 입력하세요: " search_term
+            print_random "전체 시스템에서 '$search_term'을(를) 검색합니다..."
+            sudo find / -iname "*$search_term*" 2>/dev/null
+            ;;
+        27)
+            print_random "---- 서버의 Public IP 확인 ----"
+            curl ifconfig.me
+            echo ""
+            ;;
+        28)
+            print_random "---- 패키지 깨진 부분 수정 ----"
+            print_random "이 명령어는 깨진 의존성 문제를 해결합니다. (디스크 오류와는 관련없습니다.)"
+            sudo apt --fix-broken install
+            ;;
+        29)
             print_random "---- 시스템 청소 및 불필요한 패키지 제거 ----"
             sudo apt autoremove -y && rm /root/*.deb && apt-get clean && sudo rm -rf /tmp/* && rm -rf ~/.cache/*
             sudo rm -f /root/*.sh /root/*.rz
             print_random "시스템 청소 작업이 완료되었습니다."
             ;;
-        21)
+        30)
             print_random "---- 시스템 유지보수 정리 작업 (APT 캐시, 백업 데이터, 오래된 로그, 스왑 청소, 커널 제거, 중지된 Docker 관련 삭제 및 정리 작업) ----"
             sudo apt-get autoclean
             sudo rm -rf /var/cache/apt/archives/* /var/backups/*
@@ -330,8 +394,8 @@ do
             sudo fstrim -av
             print_random "시스템 유지보수 정리 작업이 완료되었습니다."
             ;;
-        22)
-            print_random "---- 전체 시스템 최적화 작업 (17번+18번 실행) ----"
+        31)
+            print_random "---- 전체 시스템 최적화 작업 (시스템 청소 및 불필요한 패키지제거 + 시스템 유지 보수 정리 작업) ----"
             sudo apt autoremove -y && rm /root/*.deb && apt-get clean && sudo rm -rf /tmp/* && rm -rf ~/.cache/*
             sudo rm -f /root/*.sh /root/*.rz
             sudo apt-get autoclean
@@ -366,3 +430,4 @@ do
     read -n 1 -s
     echo ""
 done
+
