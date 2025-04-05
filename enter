@@ -1,0 +1,368 @@
+#!/bin/bash
+
+# 랜덤 색상 출력 함수 (ANSI 색상 코드 31~36)
+print_random() {
+    colors=( "31" "32" "33" "34" "35" "36" )
+    rand=${colors[$RANDOM % ${#colors[@]}]}
+    echo -e "\033[${rand}m$*\033[0m"
+}
+
+while true
+do
+    echo "======================================"
+    echo "            우분투 서버 메뉴          "
+    echo "======================================"
+    echo "1) 서버의 모든 사양 표시 (CPU, RAM, SSD, 네트워크 등)"
+    echo "2) 현재 위치의 파일 목록 표시"
+    echo "3) 특정 파일 및 폴더 삭제"
+    echo "4) 서버 업데이트 & 업그레이드"
+    echo "5) 서버 재부팅 및 종료 관리"
+    echo "6) 로그 파일 모니터링"
+    echo "7) 네트워크 연결 상태 확인"
+    echo "8) 도커 설치 (공식 레포지토리 사용)"
+    echo "9) 도커 컨테이너 목록 표시"
+    echo "10) 도커 이미지 목록 표시"
+    echo "11) 특정 도커 또는 도커 이미지 삭제"
+    echo "12) 스크린(screen) 설치"
+    echo "13) 특정 스크린(screen) 생성"
+    echo "14) 스크린 목록 표시"
+    echo "15) 특정 스크린 들어가기 (빠져나올 땐 반드시 Ctrl+A, D 입니다.)"
+    echo "16) 특정 스크린 삭제"
+    echo "17) 스왑 메모리 20GB 추가하기"
+    echo "18) nmon 설치(서버실시간 리소스 확인가능)"
+    echo "19) nmon 실행"
+    echo "20) 시스템 청소 및 불필요한 패키지 제거"
+    echo "21) 시스템 유지보수 정리 작업 (APT 캐시, 백업 데이터, 오래된 로그, 스왑 청소, 커널 제거, 중지된 Docker 관련 삭제 및 정리 작업)"
+    echo "22) 전체 시스템 최적화 작업 (17번+18번 실행)"
+    echo "0) 종료"
+    echo "======================================"
+    read -p "원하는 작업의 번호를 입력하세요: " choice
+
+    case "$choice" in
+        1)
+            print_random "---- 서버의 모든 사양 표시 ----"
+            print_random "CPU 정보:"
+            sudo lscpu
+            echo ""
+            print_random "RAM 정보:"
+            free -h
+            echo ""
+            print_random "디스크 정보:"
+            df -h
+            echo ""
+            print_random "네트워크 정보:"
+            ip addr show
+            echo ""
+            ;;
+        2)
+            print_random "---- 현재 위치의 파일 목록 표시 ----"
+            ls -alh
+            echo ""
+            ;;
+        3)
+            print_random "---- 특정 파일 및 폴더 삭제 ----"
+            read -rp "삭제할 파일 또는 폴더 이름(공백 포함 가능): " target
+            if [ -e "$target" ]; then
+                sudo rm -rf "$target"
+                print_random "'$target' 파일(폴더)을 삭제했습니다."
+            else
+                print_random "'$target' 파일(폴더)이 존재하지 않습니다."
+            fi
+            echo ""
+            ;;
+        4)
+            print_random "---- 서버 업데이트 & 업그레이드 ----"
+            sudo apt update && sudo apt upgrade -y
+            ;;
+        5)
+            print_random "---- 서버 재부팅 및 종료 관리 ----"
+            echo "1) 재부팅"
+            echo "2) 종료"
+            read -p "원하는 작업 번호를 입력하세요: " power_choice
+            case "$power_choice" in
+                1)
+                    print_random "서버를 재부팅합니다..."
+                    sudo reboot
+                    ;;
+                2)
+                    print_random "서버를 종료합니다..."
+                    sudo shutdown -h now
+                    ;;
+                *)
+                    print_random "잘못된 입력입니다."
+                    ;;
+            esac
+            ;;
+        6)
+            print_random "---- 로그 파일 모니터링 ----"
+            if [ -f /var/log/syslog ]; then
+                print_random "/var/log/syslog 최근 50줄 출력:"
+                sudo tail -n 50 /var/log/syslog
+            else
+                print_random "시스템 로그 파일이 /var/log/syslog에 없습니다. journalctl 사용:"
+                sudo journalctl -n 50
+            fi
+            ;;
+        7)
+            print_random "---- 네트워크 연결 상태 확인 ----"
+            sudo ss -tunap
+            ;;
+        8)
+            print_random "---- 도커(Docker) 공식 레포지토리 기반 설치 ----"
+            print_random "기존 도커 패키지 제거(있다면)..."
+            sudo apt-get remove docker docker-engine docker.io containerd runc -y
+            print_random "패키지 목록 업데이트..."
+            sudo apt-get update
+            print_random "도커 설치를 위한 의존 패키지 설치..."
+            sudo apt-get install ca-certificates curl gnupg -y
+            print_random "GPG 키링 디렉토리 생성..."
+            sudo install -m 0755 -d /etc/apt/keyrings
+            print_random "Docker GPG 키 추가..."
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+                gpg --dearmor | sudo tee /etc/apt/keyrings/docker.gpg > /dev/null
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+            print_random "Docker 공식 저장소 추가..."
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            print_random "패키지 목록 업데이트..."
+            sudo apt-get update
+            print_random "Docker 엔진, CLI, containerd 등 설치..."
+            sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+            print_random "Docker 서비스 활성화 및 시작..."
+            sudo systemctl enable docker
+            sudo systemctl start docker
+            print_random "Docker 데몬 상태 확인..."
+            if sudo systemctl is-active docker >/dev/null; then
+                print_random "Docker 데몬이 정상적으로 실행중입니다."
+            else
+                print_random "Docker 데몬이 실행 중이 아닙니다. Docker 데몬을 시작합니다..."
+                sudo systemctl start docker
+                if sudo systemctl is-active docker >/dev/null; then
+                    print_random "Docker 데몬이 성공적으로 시작되었습니다."
+                else
+                    print_random "Docker 데몬 시작에 실패하였습니다. 로그를 확인하세요."
+                fi
+            fi
+            print_random "도커 설치 완료!"
+            print_random "설치 버전 확인:"
+            sudo docker version
+            ;;
+        9)
+            print_random "---- 도커 컨테이너 목록 표시 ----"
+            sudo docker ps -a
+            echo ""
+            ;;
+        10)
+            print_random "---- 도커 이미지 목록 표시 ----"
+            sudo docker images
+            echo ""
+            ;;
+        11)
+            print_random "---- 특정 도커(컨테이너) 또는 이미지 삭제 ----"
+            read -p "삭제할 도커 컨테이너/이미지 이름 또는 ID (하나만 입력): " docker_target
+            print_random "'$docker_target'를(을) 도커 컨테이너 또는 이미지로 판단하여 삭제합니다."
+            sudo docker rm -f "$docker_target" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                print_random "도커 컨테이너 '$docker_target' 삭제 성공"
+            else
+                print_random "도커 컨테이너가 아니거나 존재하지 않음. 도커 이미지로 삭제 시도..."
+                sudo docker rmi -f "$docker_target" 2>/dev/null
+                if [ $? -eq 0 ]; then
+                    print_random "도커 이미지 '$docker_target' 삭제 성공"
+                else
+                    print_random "'$docker_target'는(은) 유효한 컨테이너/이미지가 아니거나 존재하지 않습니다."
+                fi
+            fi
+            echo ""
+            ;;
+        12)
+            print_random "---- 스크린(screen) 설치 ----"
+            sudo apt update
+            sudo apt install screen -y
+            print_random "스크린 설치 완료!"
+            ;;
+        13)
+            print_random "---- 특정 스크린(screen) 생성 ----"
+            read -p "새롭게 생성할 스크린 이름을 입력하세요: " new_screen
+            print_random "새로운 스크린 '$new_screen'을(를) 생성합니다..."
+            screen -S "$new_screen"
+            ;;
+        14)
+            print_random "---- 스크린 목록 표시 ----"
+            screen -ls
+            echo ""
+            ;;
+        15)
+            print_random "---- 특정 스크린 들어가기 (빠져나올 땐 반드시 Ctrl+A, D 입니다.) ----"
+            read -p "들어갈 스크린 세션의 이름 또는 PID를 입력하세요: " screen_target
+            sessions=$(screen -ls | grep -o '[0-9]\+\.[^[:space:]]\+')
+            exact_matches=()
+            substring_matches=()
+            for session in $sessions; do
+                sess_name=$(echo "$session" | cut -d '.' -f2-)
+                if [ "$sess_name" == "$screen_target" ]; then
+                    exact_matches+=("$session")
+                elif [[ "$session" == *"$screen_target"* ]]; then
+                    substring_matches+=("$session")
+                fi
+            done
+            if [ ${#exact_matches[@]} -eq 1 ]; then
+                selected_session="${exact_matches[0]}"
+                print_random "'$selected_session' 세션에 접속합니다..."
+                screen -r "$selected_session"
+            elif [ ${#exact_matches[@]} -gt 1 ]; then
+                print_random "입력하신 '$screen_target'와 정확히 일치하는 스크린 세션이 여러 개 있습니다. 정확한 세션 ID를 입력해주세요."
+                echo "매칭된 세션들:"
+                for s in "${exact_matches[@]}"; do
+                    echo "$s"
+                done
+            else
+                if [ ${#substring_matches[@]} -eq 1 ]; then
+                    selected_session="${substring_matches[0]}"
+                    print_random "'$selected_session' 세션에 접속합니다..."
+                    screen -r "$selected_session"
+                elif [ ${#substring_matches[@]} -gt 1 ]; then
+                    print_random "입력하신 '$screen_target'로 매칭되는 스크린 세션이 여러 개 있습니다. 정확한 세션 ID를 입력해주세요."
+                    echo "매칭된 세션들:"
+                    for s in "${substring_matches[@]}"; do
+                        echo "$s"
+                    done
+                else
+                    print_random "'$screen_target' 세션이 존재하지 않습니다."
+                fi
+            fi
+            ;;
+        16)
+            print_random "---- 특정 스크린 삭제 ----"
+            read -p "종료할 스크린 세션의 이름 또는 PID를 입력하세요: " screen_target
+            sessions=$(screen -ls | grep -o '[0-9]\+\.[^[:space:]]\+')
+            exact_matches=()
+            substring_matches=()
+            for session in $sessions; do
+                sess_name=$(echo "$session" | cut -d '.' -f2-)
+                if [ "$sess_name" == "$screen_target" ]; then
+                    exact_matches+=("$session")
+                elif [[ "$session" == *"$screen_target"* ]]; then
+                    substring_matches+=("$session")
+                fi
+            done
+            if [ ${#exact_matches[@]} -eq 1 ]; then
+                selected_session="${exact_matches[0]}"
+                screen -X -S "$selected_session" quit
+                print_random "'$selected_session' 세션을 종료했습니다."
+                screen -wipe >/dev/null 2>&1
+            elif [ ${#exact_matches[@]} -gt 1 ]; then
+                print_random "입력하신 '$screen_target'와 정확히 일치하는 스크린 세션이 여러 개 있습니다. 정확한 세션 ID를 입력해주세요."
+                echo "매칭된 세션들:"
+                for s in "${exact_matches[@]}"; do
+                    echo "$s"
+                done
+            else
+                if [ ${#substring_matches[@]} -eq 1 ]; then
+                    selected_session="${substring_matches[0]}"
+                    screen -X -S "$selected_session" quit
+                    print_random "'$selected_session' 세션을 종료했습니다."
+                    screen -wipe >/dev/null 2>&1
+                elif [ ${#substring_matches[@]} -gt 1 ]; then
+                    print_random "입력하신 '$screen_target'로 매칭되는 스크린 세션이 여러 개 있습니다. 정확한 세션 ID를 입력해주세요."
+                    echo "매칭된 세션들:"
+                    for s in "${substring_matches[@]}"; do
+                        echo "$s"
+                    done
+                else
+                    print_random "'$screen_target' 세션이 존재하지 않습니다."
+                fi
+            fi
+            ;;
+        17)
+            print_random "---- 20GB 스왑 메모리 추가 ----"
+            # 기존 /swapfile이 있으면 해제 후 삭제
+            if [ -f /swapfile ]; then
+                print_random "/swapfile이 이미 존재합니다. 스왑을 해제하고 기존 파일을 삭제합니다..."
+                sudo swapoff /swapfile
+                sudo rm /swapfile
+            fi
+            sudo fallocate -l 20G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+            SWAP_LINE="/swapfile swap swap defaults 0 0"
+            if ! grep -Fxq "$SWAP_LINE" /etc/fstab; then
+                echo "$SWAP_LINE" | sudo tee -a /etc/fstab > /dev/null
+            fi
+            sudo swapon --show
+            print_random "스왑 메모리 20GB가 추가되었고, /etc/fstab에 등록되었습니다."
+            ;;
+        18)
+            print_random "---- nmon 설치(서버실시간 리소스 확인가능) ----"
+            sudo apt update
+            sudo apt install nmon -y
+            print_random "nmon 설치 완료!"
+            ;;
+        19)
+            print_random "---- nmon 실행 ----"
+            print_random "nmon이 실행됩니다. 종료하려면 nmon 내부에서 q 누르세요."
+            nmon
+            ;;
+        20)
+            print_random "---- 시스템 청소 및 불필요한 패키지 제거 ----"
+            sudo apt autoremove -y && rm /root/*.deb && apt-get clean && sudo rm -rf /tmp/* && rm -rf ~/.cache/*
+            sudo rm -f /root/*.sh /root/*.rz
+            print_random "시스템 청소 작업이 완료되었습니다."
+            ;;
+        21)
+            print_random "---- 시스템 유지보수 정리 작업 (APT 캐시, 백업 데이터, 오래된 로그, 스왑 청소, 커널 제거, 중지된 Docker 관련 삭제 및 정리 작업) ----"
+            sudo apt-get autoclean
+            sudo rm -rf /var/cache/apt/archives/* /var/backups/*
+            sudo rm -f /var/cache/apt/pkgcache.bin /var/cache/apt/srcpkgcache.bin
+            sudo find /var/log -type f -name "*.log" -exec rm -f {} \;
+            sudo journalctl --vacuum-time=3d
+            sudo swapoff -a && sudo swapon -a
+            sudo apt-get remove --purge $(dpkg -l | awk '/^rc/ { print $2 }') -y
+            docker container prune -f
+            docker image prune -a -f
+            docker volume prune -f
+            docker system prune -a -f
+            echo -e '#!/bin/bash\ndocker ps -q | xargs -I {} docker logs --tail 0 {} > /dev/null' | sudo tee /usr/local/bin/docker-log-cleanup.sh
+            sudo chmod +x /usr/local/bin/docker-log-cleanup.sh
+            echo '0 0 * * * /usr/local/bin/docker-log-cleanup.sh' | sudo crontab -
+            sudo lvremove --force $(lvs --noheadings -o lv_path | grep '_snapshot')
+            sudo fstrim -av
+            print_random "시스템 유지보수 정리 작업이 완료되었습니다."
+            ;;
+        22)
+            print_random "---- 전체 시스템 최적화 작업 (17번+18번 실행) ----"
+            sudo apt autoremove -y && rm /root/*.deb && apt-get clean && sudo rm -rf /tmp/* && rm -rf ~/.cache/*
+            sudo rm -f /root/*.sh /root/*.rz
+            sudo apt-get autoclean
+            sudo rm -rf /var/cache/apt/archives/* /var/backups/*
+            sudo rm -f /var/cache/apt/pkgcache.bin /var/cache/apt/srcpkgcache.bin
+            sudo find /var/log -type f -name "*.log" -exec rm -f {} \;
+            sudo journalctl --vacuum-time=3d
+            sudo swapoff -a && sudo swapon -a
+            sudo apt-get remove --purge $(dpkg -l | awk '/^rc/ { print $2 }') -y
+            docker container prune -f
+            docker image prune -a -f
+            docker volume prune -f
+            docker system prune -a -f
+            echo -e '#!/bin/bash\ndocker ps -q | xargs -I {} docker logs --tail 0 {} > /dev/null' | sudo tee /usr/local/bin/docker-log-cleanup.sh
+            sudo chmod +x /usr/local/bin/docker-log-cleanup.sh
+            echo '0 0 * * * /usr/local/bin/docker-log-cleanup.sh' | sudo crontab -
+            sudo lvremove --force $(lvs --noheadings -o lv_path | grep '_snapshot')
+            sudo fstrim -av
+            print_random "전체 시스템 최적화 작업이 완료되었습니다!"
+            ;;
+        0)
+            echo "메뉴를 종료합니다."
+            exit 0
+            ;;
+        *)
+            echo "잘못된 입력입니다. 다시 선택해주세요."
+            ;;
+    esac
+
+    echo ""
+    echo "아무 키나 누르면 메뉴로 돌아갑니다."
+    read -n 1 -s
+    echo ""
+done
